@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nafuuna Stack Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>🌊 Nafuuna Stack Dashboard</h1>
+    <div id="data-container">
+        <h2>Data Overview</h2>
+        <div id="data"></div>
+    </div>
+    
+    <script>
+        // Function to analyze data
+        function analyzeData(data) {
+            const stats = {
+                heritage: {},
+                groups: {},
+                outputs: {},
+                trust: {},
+                salary: { total: 0, count: 0 }
+            };
+            
+            data.forEach(record => {
+                stats.heritage[record.heritage] = (stats.heritage[record.heritage] || 0) + 1;
+                stats.groups[record.group] = (stats.groups[record.group] || 0) + 1;
+                stats.outputs[record.output] = (stats.outputs[record.output] || 0) + 1;
+                stats.trust[record.trust] = (stats.trust[record.trust] || 0) + 1;
+                stats.salary.total += record.salary;
+                stats.salary.count += 1;
+            });
+            
+            const salaries = data.map(r => r.salary).sort((a, b) => a - b);
+            stats.salary.avg = Math.round(stats.salary.total / stats.salary.count);
+            stats.salary.min = salaries[0];
+            stats.salary.max = salaries[salaries.length - 1];
+            
+            return stats;
+        }
+
+        // Fetch data from Flask backend
+        fetch('/data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const container = document.getElementById('data');
+            
+            if (data.error) {
+                container.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                return;
+            }
+            
+            // Analyze the data
+            const stats = analyzeData(data);
+            
+            // Display meaningful insights
+            container.innerHTML = `
+                <div class="data-info">
+                    <p><strong>Total Records:</strong> ${data.length}</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Heritage Distribution</h3>
+                        ${Object.entries(stats.heritage).map(([key, value]) => 
+                            `<div class="stat-item">${key}: <strong>${value}</strong></div>`
+                        ).join('')}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Group Distribution</h3>
+                        ${Object.entries(stats.groups).map(([key, value]) => 
+                            `<div class="stat-item">Group ${key}: <strong>${value}</strong></div>`
+                        ).join('')}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Output Types</h3>
+                        ${Object.entries(stats.outputs).map(([key, value]) => 
+                            `<div class="stat-item">${key}: <strong>${value}</strong></div>`
+                        ).join('')}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Trust Levels</h3>
+                        ${Object.entries(stats.trust).map(([key, value]) => 
+                            `<div class="stat-item">${key}: <strong>${value}</strong></div>`
+                        ).join('')}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Salary Stats</h3>
+                        <div class="stat-item">Average: <strong>${stats.salary.avg}</strong></div>
+                        <div class="stat-item">Highest: <strong>${stats.salary.max}</strong></div>
+                        <div class="stat-item">Lowest: <strong>${stats.salary.min}</strong></div>
+                    </div>
+                </div>
+                
+                <details class="raw-data">
+                    <summary>View Raw Data (Click to expand)</summary>
+                    <pre class="json-data">${JSON.stringify(data, null, 2)}</pre>
+                </details>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            const container = document.getElementById('data');
+            container.innerHTML = `<p class="error">Error loading data: ${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>
