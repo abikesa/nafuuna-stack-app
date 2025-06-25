@@ -1,1 +1,1 @@
-<img src="https://www.youtube.com/watch?v=iMp17JcLRPg.gif" alt="Video Preview" width="560" height="315">
+[![Video Preview](https://img.youtube.com/vi/iMp17JcLRPg/0.jpg)](https://www.youtube.com/watch?v=iMp17JcLRPg)
